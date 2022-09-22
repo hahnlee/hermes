@@ -112,6 +112,12 @@ class TracingRuntime : public jsi::RuntimeDecorator<jsi::Runtime> {
       const jsi::Value *args,
       size_t count) override;
 
+  jsi::Value call(
+      const jsi::Function &func,
+      const jsi::Value &jsThis,
+      const jsi::Value *args[],
+      size_t count) override;
+
   jsi::Value callAsConstructor(
       const jsi::Function &func,
       const jsi::Value *args,
@@ -146,6 +152,10 @@ class TracingRuntime : public jsi::RuntimeDecorator<jsi::Runtime> {
 
   std::vector<SynthTrace::TraceValue> argStringifyer(
       const jsi::Value *args,
+      size_t count);
+
+  std::vector<SynthTrace::TraceValue> argStringifyer(
+      const jsi::Value *args[],
       size_t count);
 
   SynthTrace::TimeSinceStart getTimeSinceStart() const;

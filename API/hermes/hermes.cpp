@@ -753,6 +753,11 @@ class HermesRuntimeImpl final : public HermesRuntime,
       const jsi::Value &jsThis,
       const jsi::Value *args,
       size_t count) override;
+  jsi::Value call(
+      const jsi::Function &,
+      const jsi::Value &jsThis,
+      const jsi::Value *args[],
+      size_t count) override;
   jsi::Value callAsConstructor(
       const jsi::Function &,
       const jsi::Value *args,
@@ -2112,6 +2117,42 @@ jsi::Value HermesRuntimeImpl::call(
   checkStatus(callRes.getStatus());
 
   return valueFromHermesValue(callRes->get());
+}
+
+jsi::Value HermesRuntimeImpl::call(
+    const jsi::Function &func,
+    const jsi::Value &jsThis,
+    const jsi::Value *args[],
+    size_t count) {
+  vm::GCScope gcScope(runtime_);
+  vm::Handle<vm::Callable> handle =
+      vm::Handle<vm::Callable>::vmcast(&phv(func));
+  if (count > std::numeric_limits<uint32_t>::max() ||
+      !runtime_.checkAvailableStack((uint32_t)count)) {
+    LOG_EXCEPTION_CAUSE(
+        "HermesRuntimeImpl::call: Unable to call function: stack overflow");
+    throw jsi::JSINativeException(
+        "HermesRuntimeImpl::call: Unable to call function: stack overflow");
+  }
+
+  vm::ScopedNativeCallFrame newFrame{
+      runtime_,
+      static_cast<uint32_t>(count),
+      handle.getHermesValue(),
+      vm::HermesValue::encodeUndefinedValue(),
+      hvFromValue(jsThis)};
+  if (LLVM_UNLIKELY(newFrame.overflowed())) {
+    checkStatus(runtime_.raiseStackOverflow(
+        ::hermes::vm::Runtime::StackOverflowKind::NativeStack));
+  }
+
+  for (uint32_t i = 0; i != count; ++i) {
+    newFrame->getArgRef(i) = hvFromValue(*args[i]);
+  }
+  auto callRes = vm::Callable::call(handle, runtime_);
+  checkStatus(callRes.getStatus());
+
+  return valueFromHermesValue(callRes->get());  
 }
 
 jsi::Value HermesRuntimeImpl::callAsConstructor(

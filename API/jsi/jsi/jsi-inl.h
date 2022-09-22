@@ -257,6 +257,10 @@ inline Value Function::call(Runtime& runtime, const Value* args, size_t count)
   return runtime.call(*this, Value::undefined(), args, count);
 }
 
+inline Value Function::call(Runtime& runtime, const Value* args[], size_t count) const {
+  return runtime.call(*this, Value::undefined(), args, count);
+}
+
 inline Value Function::call(Runtime& runtime, std::initializer_list<Value> args)
     const {
   return call(runtime, args.begin(), args.size());

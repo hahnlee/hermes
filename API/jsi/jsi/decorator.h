@@ -332,6 +332,13 @@ class RuntimeDecorator : public Base, private jsi::Instrumentation {
       size_t count) override {
     return plain_.call(f, jsThis, args, count);
   };
+  Value call(
+      const Function& f,
+      const Value& jsThis,
+      const Value* args[],
+      size_t count) override {
+    return plain_.call(f, jsThis, args, count);
+  };
   Value callAsConstructor(const Function& f, const Value* args, size_t count)
       override {
     return plain_.callAsConstructor(f, args, count);

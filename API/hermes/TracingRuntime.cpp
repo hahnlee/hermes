@@ -693,6 +693,22 @@ jsi::Value TracingRuntime::call(
   return retval;
 }
 
+jsi::Value TracingRuntime::call(
+    const jsi::Function &func,
+    const jsi::Value &jsThis,
+    const jsi::Value *args[],
+    size_t count) {
+  trace_.emplace_back<SynthTrace::CallFromNativeRecord>(
+      getTimeSinceStart(),
+      getUniqueID(func),
+      toTraceValue(jsThis),
+      argStringifyer(args, count));
+  auto retval = RD::call(func, jsThis, args, count);
+  trace_.emplace_back<SynthTrace::ReturnToNativeRecord>(
+      getTimeSinceStart(), toTraceValue(retval));
+  return retval;
+}
+
 jsi::Value TracingRuntime::callAsConstructor(
     const jsi::Function &func,
     const jsi::Value *args,
@@ -723,6 +739,17 @@ std::vector<SynthTrace::TraceValue> TracingRuntime::argStringifyer(
   stringifiedArgs.reserve(count);
   for (size_t i = 0; i < count; ++i) {
     stringifiedArgs.emplace_back(toTraceValue(args[i]));
+  }
+  return stringifiedArgs;
+}
+
+std::vector<SynthTrace::TraceValue> TracingRuntime::argStringifyer(
+    const jsi::Value *args[],
+    size_t count) {
+  std::vector<SynthTrace::TraceValue> stringifiedArgs;
+  stringifiedArgs.reserve(count);
+  for (size_t i = 0; i < count; ++i) {
+    stringifiedArgs.emplace_back(toTraceValue(*args[i]));
   }
   return stringifiedArgs;
 }

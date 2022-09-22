@@ -351,6 +351,11 @@ class JSI_EXPORT Runtime {
       const Value& jsThis,
       const Value* args,
       size_t count) = 0;
+  virtual Value call(
+      const Function&,
+      const Value& jsThis,
+      const Value* args[],
+      size_t count) = 0;
   virtual Value
   callAsConstructor(const Function&, const Value* args, size_t count) = 0;
 
@@ -961,6 +966,8 @@ class JSI_EXPORT Function : public Object {
   /// \c undefined in the function itself.  If the function is non-strict,
   /// \c this will be set to the global object.
   Value call(Runtime& runtime, const Value* args, size_t count) const;
+
+  Value call(Runtime& runtime, const Value* args[], size_t count) const;
 
   /// Calls the function with a \c std::initializer_list of Value
   /// arguments.  The \c this value of the JS function will not be set by the
